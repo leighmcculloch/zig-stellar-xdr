@@ -1,0 +1,19 @@
+pub const TypeVariant = enum {
+{%- for t in type_variant_enum.types %}
+    {{ t }},
+{%- endfor %}
+
+    pub const variants = [_]TypeVariant{
+{%- for t in type_variant_enum.types %}
+        .{{ t }},
+{%- endfor %}
+    };
+
+    pub fn name(self: TypeVariant) []const u8 {
+        return switch (self) {
+{%- for t in type_variant_enum.types %}
+            .{{ t }} => "{{ t }}",
+{%- endfor %}
+        };
+    }
+};

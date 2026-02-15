@@ -1,0 +1,76 @@
+/// {{ u.name }}{{ u.source_comment }}
+pub const {{ u.name }} = union(enum) {
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
+    {{ arm.case_name }},
+{%- else %}
+    {{ arm.case_name }}: {{ arm.type_ref.as_ref().unwrap() }},
+{%- endif %}
+{%- endfor %}
+
+    pub fn xdrDecode(allocator: Allocator, reader: anytype) !{{ u.name }} {
+{%- if u.discriminant_is_builtin %}
+        const disc_value = try reader.readInt(i32, .big);
+        return switch (disc_value) {
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
+            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = {} },
+{%- else %}
+            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = try xdrDecode({{ arm.type_ref.as_ref().unwrap() }}, allocator, reader) },
+{%- endif %}
+{%- endfor %}
+            else => return error.InvalidUnionDiscriminant,
+        };
+{%- else %}
+        const disc = try {{ u.discriminant_type }}.xdrDecode(allocator, reader);
+        return switch (disc) {
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
+            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = {} },
+{%- else %}
+            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = try xdrDecode({{ arm.type_ref.as_ref().unwrap() }}, allocator, reader) },
+{%- endif %}
+{%- endfor %}
+            _ => return error.InvalidUnionDiscriminant,
+        };
+{%- endif %}
+    }
+
+    pub fn xdrEncode(self: {{ u.name }}, writer: anytype) !void {
+{%- if u.discriminant_is_builtin %}
+        switch (self) {
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
+            .{{ arm.case_name }} => try writer.writeInt(i32, {{ arm.case_value }}, .big),
+{%- else %}
+            .{{ arm.case_name }} => |v| {
+                try writer.writeInt(i32, {{ arm.case_value }}, .big);
+                try xdrEncode({{ arm.type_ref.as_ref().unwrap() }}, writer, v);
+            },
+{%- endif %}
+{%- endfor %}
+        }
+{%- else %}
+        const disc: {{ u.discriminant_type }} = switch (self) {
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
+            .{{ arm.case_name }} => {{ arm.case_value }},
+{%- else %}
+            .{{ arm.case_name }} => {{ arm.case_value }},
+{%- endif %}
+{%- endfor %}
+        };
+        try disc.xdrEncode(writer);
+        switch (self) {
+{%- for arm in u.arms %}
+{%- if arm.is_void %}
+            .{{ arm.case_name }} => {},
+{%- else %}
+            .{{ arm.case_name }} => |v| try xdrEncode({{ arm.type_ref.as_ref().unwrap() }}, writer, v),
+{%- endif %}
+{%- endfor %}
+        }
+{%- endif %}
+    }
+};
+

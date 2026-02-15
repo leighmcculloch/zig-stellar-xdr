@@ -1,0 +1,21 @@
+/// {{ s.name }}{{ s.source_comment }}
+pub const {{ s.name }} = struct {
+{%- for m in s.members %}
+    {{ m.name }}: {{ m.type_ref }},
+{%- endfor %}
+
+    pub fn xdrDecode(allocator: Allocator, reader: anytype) !{{ s.name }} {
+        return {{ s.name }}{
+{%- for m in s.members %}
+            .{{ m.name }} = try xdrDecode({{ m.type_ref }}, allocator, reader),
+{%- endfor %}
+        };
+    }
+
+    pub fn xdrEncode(self: {{ s.name }}, writer: anytype) !void {
+{%- for m in s.members %}
+        try xdrEncode({{ m.type_ref }}, writer, self.{{ m.name }});
+{%- endfor %}
+    }
+};
+

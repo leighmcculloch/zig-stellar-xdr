@@ -1,0 +1,33 @@
+/// {{ e.name }}{{ e.source_comment }}
+pub const {{ e.name }} = enum(i32) {
+{%- for m in e.members %}
+    {{ m.name }} = {{ m.value }},
+{%- endfor %}
+    _,
+
+    pub const variants = [_]{{ e.name }}{
+{%- for m in e.members %}
+        .{{ m.name }},
+{%- endfor %}
+    };
+
+    pub fn name(self: {{ e.name }}) []const u8 {
+        return switch (self) {
+{%- for m in e.members %}
+            .{{ m.name }} => "{{ m.name }}",
+{%- endfor %}
+            _ => "unknown",
+        };
+    }
+
+    pub fn xdrDecode(allocator: Allocator, reader: anytype) !{{ e.name }} {
+        _ = allocator;
+        const value = try reader.readInt(i32, .big);
+        return @enumFromInt(value);
+    }
+
+    pub fn xdrEncode(self: {{ e.name }}, writer: anytype) !void {
+        try writer.writeInt(i32, @intFromEnum(self), .big);
+    }
+};
+

@@ -1,0 +1,27 @@
+/// {{ t.name }}{{ t.source_comment }}
+pub const {{ t.name }} = struct {
+    value: {{ t.type_ref }},
+
+    pub fn xdrDecode(allocator: Allocator, reader: anytype) !{{ t.name }} {
+        return {{ t.name }}{
+            .value = try xdrDecode({{ t.type_ref }}, allocator, reader),
+        };
+    }
+
+    pub fn xdrEncode(self: {{ t.name }}, writer: anytype) !void {
+        try xdrEncode({{ t.type_ref }}, writer, self.value);
+    }
+{%- if t.is_fixed_array %}
+
+    pub fn asSlice(self: *const {{ t.name }}) []const {{ t.element_type }} {
+        return &self.value;
+    }
+{%- endif %}
+{%- if t.is_var_array %}
+
+    pub fn asSlice(self: {{ t.name }}) []const {{ t.element_type }} {
+        return self.value.data;
+    }
+{%- endif %}
+};
+
