@@ -1,0 +1,11 @@
+.{
+    .name = .{ .buffer = "stellar-xdr" },
+    .version = "0.0.0",
+    .fingerprint = 0xb77ab05ff1e0fd3d,
+    .minimum_zig_version = "0.14.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
