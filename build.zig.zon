@@ -1,7 +1,7 @@
 .{
-    .name = .{ .buffer = "stellar-xdr" },
+    .name = .stellar_xdr,
     .version = "0.0.0",
-    .fingerprint = 0xb77ab05ff1e0fd3d,
+    .fingerprint = 0x18ef008ddcfeae7c,
     .minimum_zig_version = "0.15.0",
     .paths = .{
         "build.zig",
