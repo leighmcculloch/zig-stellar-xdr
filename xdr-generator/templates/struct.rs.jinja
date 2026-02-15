@@ -7,14 +7,14 @@ pub const {{ s.name }} = struct {
     pub fn xdrDecode(allocator: Allocator, reader: anytype) !{{ s.name }} {
         return {{ s.name }}{
 {%- for m in s.members %}
-            .{{ m.name }} = try xdrDecode({{ m.type_ref }}, allocator, reader),
+            .{{ m.name }} = try xdrDecodeGeneric({{ m.type_ref }}, allocator, reader),
 {%- endfor %}
         };
     }
 
     pub fn xdrEncode(self: {{ s.name }}, writer: anytype) !void {
 {%- for m in s.members %}
-        try xdrEncode({{ m.type_ref }}, writer, self.{{ m.name }});
+        try xdrEncodeGeneric({{ m.type_ref }}, writer, self.{{ m.name }});
 {%- endfor %}
     }
 };

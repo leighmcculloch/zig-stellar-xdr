@@ -266,6 +266,9 @@ impl Generator {
 
         let type_kind = if u.is_nested { "NestedUnion" } else { "Union" };
 
+        let all_arms_void = arms.iter().all(|a| a.is_void);
+        let allocator_unused = discriminant_is_builtin && all_arms_void;
+
         UnionOutput {
             name,
             source_comment: format_source_comment(&u.source, type_kind),
@@ -273,6 +276,7 @@ impl Generator {
             is_custom_str: custom_str,
             discriminant_type,
             discriminant_is_builtin,
+            allocator_unused,
             arms,
             first_arm_case_name,
             first_arm_type,
@@ -487,6 +491,7 @@ pub struct UnionOutput {
     pub is_custom_str: bool,
     pub discriminant_type: String,
     pub discriminant_is_builtin: bool,
+    pub allocator_unused: bool,
     pub arms: Vec<UnionArmOutput>,
     /// For default impl: case name of the first arm.
     pub first_arm_case_name: String,
@@ -554,7 +559,10 @@ fn format_source_comment(source: &str, kind: &str) -> String {
     }
     let trimmed = source.trim();
     let lines: Vec<&str> = trimmed.lines().collect();
-    let formatted: Vec<String> = lines.iter().map(|l| format!("/// {l}")).collect();
+    let formatted: Vec<String> = lines
+        .iter()
+        .map(|l| format!("/// {}", l.replace('\t', "    ")))
+        .collect();
     format!(
         " is an XDR {kind} defined as:\n///\n/// ```text\n{}\n/// ```\n///",
         formatted.join("\n")

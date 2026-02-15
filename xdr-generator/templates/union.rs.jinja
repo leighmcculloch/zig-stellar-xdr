@@ -9,6 +9,9 @@ pub const {{ u.name }} = union(enum) {
 {%- endfor %}
 
     pub fn xdrDecode(allocator: Allocator, reader: anytype) !{{ u.name }} {
+{%- if u.allocator_unused %}
+        _ = allocator;
+{%- endif %}
 {%- if u.discriminant_is_builtin %}
         const disc_value = try reader.readInt(i32, .big);
         return switch (disc_value) {
@@ -16,7 +19,7 @@ pub const {{ u.name }} = union(enum) {
 {%- if arm.is_void %}
             {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = {} },
 {%- else %}
-            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = try xdrDecode({{ arm.type_ref.as_ref().unwrap() }}, allocator, reader) },
+            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = try xdrDecodeGeneric({{ arm.type_ref.as_ref().unwrap() }}, allocator, reader) },
 {%- endif %}
 {%- endfor %}
             else => return error.InvalidUnionDiscriminant,
@@ -28,10 +31,10 @@ pub const {{ u.name }} = union(enum) {
 {%- if arm.is_void %}
             {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = {} },
 {%- else %}
-            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = try xdrDecode({{ arm.type_ref.as_ref().unwrap() }}, allocator, reader) },
+            {{ arm.case_value }} => {{ u.name }}{ .{{ arm.case_name }} = try xdrDecodeGeneric({{ arm.type_ref.as_ref().unwrap() }}, allocator, reader) },
 {%- endif %}
 {%- endfor %}
-            _ => return error.InvalidUnionDiscriminant,
+            else => return error.InvalidUnionDiscriminant,
         };
 {%- endif %}
     }
@@ -45,7 +48,7 @@ pub const {{ u.name }} = union(enum) {
 {%- else %}
             .{{ arm.case_name }} => |v| {
                 try writer.writeInt(i32, {{ arm.case_value }}, .big);
-                try xdrEncode({{ arm.type_ref.as_ref().unwrap() }}, writer, v);
+                try xdrEncodeGeneric({{ arm.type_ref.as_ref().unwrap() }}, writer, v);
             },
 {%- endif %}
 {%- endfor %}
@@ -66,7 +69,7 @@ pub const {{ u.name }} = union(enum) {
 {%- if arm.is_void %}
             .{{ arm.case_name }} => {},
 {%- else %}
-            .{{ arm.case_name }} => |v| try xdrEncode({{ arm.type_ref.as_ref().unwrap() }}, writer, v),
+            .{{ arm.case_name }} => |v| try xdrEncodeGeneric({{ arm.type_ref.as_ref().unwrap() }}, writer, v),
 {%- endif %}
 {%- endfor %}
         }
